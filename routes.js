@@ -1,3 +1,5 @@
+import { checkServerHealth } from "./controllers/healthController.js";
+
 export const routes = [
     {
         method: "GET",
