@@ -1,4 +1,4 @@
-const routes = [
+export const routes = [
     {
         method: "GET",
         path: "/health",
