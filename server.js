@@ -2,7 +2,11 @@ import http from "http";
 import { handle } from "./router.js";
 
 const server = http.createServer((req, res) => {
-    handle(req, res);
+    try {
+        handle(req, res);
+    } catch (error) {
+        res.end("Failed");
+    }
 });
 
 server.listen(3000, () => {
