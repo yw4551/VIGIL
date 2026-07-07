@@ -1,4 +1,6 @@
 import { checkServerHealth } from "./controllers/healthController.js";
+import * as heroFuncs from "./controllers/heroesController.js";
+import { getHeroesStat } from "./controllers/statController.js";
 
 export const routes = [
     {
@@ -9,32 +11,32 @@ export const routes = [
     {
         method: "GET",
         path: "/heroes",
-        handler: getAllHeroes,
+        handler: heroFuncs.getAllHeroes,
     },
     {
         method: "GET",
         path: "/heroes/:id",
-        handler: getHeroById,
+        handler: heroFuncs.getHeroById,
     },
     {
         method: "POST",
         path: "/heroes",
-        handler: createHero,
+        handler: heroFuncs.createHero,
     },
     {
         method: "PATCH",
         path: "/heroes/:id",
-        handler: updateHero,
+        handler: heroFuncs.updateHero,
     },
     {
         method: "DELETE",
         path: "/heroes/:id",
-        handler: deleteHero,
+        handler: heroFuncs.deleteHero,
     },
     {
         method: "POST",
         path: "/heroes/search",
-        handler: searchHero,
+        handler: heroFuncs.searchHero,
     },
     {
         method: "GET",

@@ -2,7 +2,7 @@ import fs from "fs/promises";
 
 export async function readFile(filePath) {
     try {
-        const data = fs.readFile(filePath, "utf-8");
+        const data = await fs.readFile(filePath, "utf-8");
         return JSON.parse(data);
     } catch (error) {
         if (error.code === "ENOENT") {
