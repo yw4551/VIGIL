@@ -11,7 +11,7 @@ export const routes = [
     {
         method: "GET",
         path: "/heroes",
-        handler: heroFuncs.getAllHeroes,
+        handler: heroFuncs.getHeroes,
     },
     {
         method: "GET",

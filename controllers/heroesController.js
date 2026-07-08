@@ -4,8 +4,78 @@ import { sendResponse, parseBody } from "../response.js";
 const FILE_PATH = "heroes.json";
 let newId = 0;
 
-export async function getAllHeroes(req, res) {
-    return sendResponse(res, 200, await readFile(FILE_PATH));
+export async function getHeroes(req, res) {
+    try {
+        let heroes = await readFile(FILE_PATH);
+        const {
+            status,
+            power,
+            minLevel,
+            maxLevel,
+            search,
+            sortBy,
+            order = "desc",
+            page = 1,
+            limit = 20,
+        } = req.query;
+
+        if (status) {
+            heroes = heroes.filter((h) => h.status === status);
+        }
+
+        if (power) {
+            heroes = heroes.filter((h) => h.powers.includes(power));
+        }
+
+        if (maxLevel) {
+            heroes = heroes.filter((h) => h.threatLevel <= maxLevel);
+        }
+
+        if (minLevel) {
+            heroes = heroes.filter((h) => h.threatLevel >= minLevel);
+        }
+
+        if (search) {
+            const lowString = search.toLowerCase();
+            heroes = heroes.filter(
+                (h) =>
+                    h.codeName.toLowerCase().includes(lowString) ||
+                    (h.notes && h.notes.toLowerCase().includes(lowString)),
+            );
+        }
+
+        if (sortBy) {
+            heroes.sort((a, b) => {
+                let valA = a[sortBy];
+                let valB = b[sortBy];
+                if (typeof valA === "string") valA = valA.toLowerCase();
+                if (typeof valB === "string") valB = valB.toLowerCase();
+
+                if (valA < valB) return order === "asc" ? -1 : 1;
+                if (valA > valB) return order === "asc" ? 1 : -1;
+                return 0;
+            });
+        }
+
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const startIndex = (pageNum - 1) * limitNum;
+        const endIndex = pageNum * limitNum;
+        const paginatedHeroes = heroes.slice(startIndex, endIndex);
+
+        const responseData = {
+            data: paginatedHeroes,
+            meta: {
+                total: heroes.length,
+                page: pageNum,
+                limit: limitNum,
+                totalPages: Math.ceil(heroes.length / limitNum),
+            },
+        };
+        sendResponse(res, 200, responseData);
+    } catch (error) {
+        sendResponse(res, 500, "Internal Server Error", false);
+    }
 }
 
 export function getHeroById(req, res) {}
@@ -85,7 +155,7 @@ export async function createHero(req, res) {
             id: maxId + 1,
             codeName: body.codeName,
             powers: body.powers,
-            treatLevel: body.threatLevel,
+            threatLevel: body.threatLevel,
             status: body.status,
             origin: body.origin || "",
             affiliations: body.affiliations,
