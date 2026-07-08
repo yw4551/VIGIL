@@ -78,7 +78,27 @@ export async function getHeroes(req, res) {
     }
 }
 
-export function getHeroById(req, res) {}
+export async function getHeroById(req, res) {
+    try {
+        const { id } = req.params;
+        const idNum = parseInt(id, 10);
+
+        if (isNaN(idNum)) {
+            return sendResponse(res, 400, "Invalid ID format", false);
+        }
+
+        const heroes = await readFile(FILE_PATH);
+        const hero = heroes.find((h) => h.id === idNum);
+
+        if (!hero) {
+            return sendResponse(res, 404, "Hero not found.", false);
+        }
+
+        return sendResponse(res, 200, hero, true);
+    } catch (error) {
+        return sendResponse(res, 500, "Internal Server Error", false);
+    }
+}
 
 export async function createHero(req, res) {
     try {
@@ -176,8 +196,119 @@ export async function createHero(req, res) {
     }
 }
 
-export function updateHero(req, res) {}
+export async function updateHero(req, res) {
+    try {
+        const { id } = req.params;
+        const idNum = parseInt(id, 10);
 
-export function deleteHero(req, res) {}
+        if (isNaN(idNum)) {
+            return sendResponse(res, 400, "Invalid ID format", false);
+        }
 
-export function searchHero(req, res) {}
+        const body = await parseBody(req);
+        const heroes = await readFile(FILE_PATH);
+        const heroIndex = heroes.findIndex((h) => h.id === idNum);
+
+        if (heroIndex === -1) {
+            return sendResponse(res, 404, "Hero not found.", false);
+        }
+
+        const hero = heroes[heroIndex];
+
+        if (body.codeName !== undefined) {
+            if (
+                typeof body.codeName !== "string" ||
+                body.codeName.trim() === ""
+            ) {
+                return sendResponse(res, 400, "Invalid codeName", false);
+            }
+            if (
+                heroes.some(
+                    (h) => h.codeName === body.codeName && h.id !== idNum,
+                )
+            ) {
+                return sendResponse(res, 409, "codeName already exists", false);
+            }
+            hero.codeName = body.codeName;
+        }
+
+        if (body.powers !== undefined) {
+            if (!Array.isArray(body.powers) || body.powers.length === 0) {
+                return sendResponse(res, 400, "powers cant be empty", false);
+            }
+            if (!body.powers.every((p) => typeof p === "string")) {
+                return sendResponse(
+                    res,
+                    400,
+                    "All powers must be a string.",
+                    false,
+                );
+            }
+            hero.powers = body.powers;
+        }
+
+        if (body.threatLevel !== undefined) {
+            if (
+                typeof body.threatLevel !== "number" ||
+                body.threatLevel < 0 ||
+                body.threatLevel > 10
+            ) {
+                return sendResponse(
+                    res,
+                    400,
+                    "threatLevel must be a number between 1 and 10",
+                    false,
+                );
+            }
+            hero.threatLevel = body.threatLevel;
+        }
+
+        if (body.status !== undefined) {
+            const validStatuses = ["active", "retired", "missing", "deceased"];
+            if (!validStatuses.includes(body.status)) {
+                return sendResponse(
+                    res,
+                    400,
+                    `status must be one of the following options ${validStatuses}`,
+                    false,
+                );
+            }
+            hero.status = body.status;
+        }
+
+        if (body.affiliations !== undefined) {
+            if (!Array.isArray(body.affiliations)) {
+                return sendResponse(
+                    res,
+                    400,
+                    "affiliations must be an array.",
+                    false,
+                );
+            }
+            hero.affiliations = body.affiliations;
+        }
+
+        if (body.origin !== undefined) {
+            hero.origin = body.origin;
+        }
+
+        if (body.notes !== undefined) {
+            hero.notes = body.notes;
+        }
+
+        hero.updatedAt = new Date().toISOString();
+        heroes[heroIndex] = hero;
+
+        await writeFile(FILE_PATH, heroes);
+        sendResponse(res, 200, hero);
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            return sendResponse(res, 400, "Invalid JSON", false);
+        }
+        sendResponse(res, 500, "Internal Server Error", false);
+    }
+}
+
+export async function deleteHero(req, res) {}
+
+export async function searchHero(req, res) {}
